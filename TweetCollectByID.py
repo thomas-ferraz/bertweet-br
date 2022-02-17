@@ -12,7 +12,7 @@ import time
 source_filename = "" # Your given query to search tweets (necessary, cannot search for nothing)
 collection_total = 1 # How many tweets do you want to collect with the API using the IDs in your source file (MINIMUM OF 100)
 filename = "tweetID_return_17_02_2022.csv" # Name of file to save the data into, type .csv
-os.environ['TOKEN'] = 'AAAAAAAAAAAAAAAAAAAAAP0cYgEAAAAA2N%2BSHYVTLF8O5MMH3o4rruD7rj4%3DufQh8M7QLem44lwsgkb8QnpjqZDImPlfxgNeEiEqWxvdRdjsGU' # Bearer Token from your twitter dev account
+os.environ['TOKEN'] = 'token' # Bearer Token from your twitter dev account
 
 # Functions of the program:
 def auth():

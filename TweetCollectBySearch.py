@@ -9,9 +9,9 @@ import pandas as pd
 import time
 
 # Variables to change on each use of the program:
-keyword = "covid" # Your given query to search tweets (necessary, cannot search for nothing)
+keyword = "a" # Your given query to search tweets (necessary, cannot search for nothing)
 collection_total = 100 # How many tweets do you want to collect with the API and add into the CSV (MINIMUM OF 100)
-filename = "tweet_return_1_10_02_2022.csv" # Name of file to save the data into, type .csv
+filename = "tweetSEARCH_return_17_02_2022.csv" # Name of file to save the data into, type .csv
 os.environ['TOKEN'] = 'token' # Bearer Token from your twitter dev account
 
 # Functions of the program:
