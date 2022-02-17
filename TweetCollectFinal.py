@@ -35,7 +35,7 @@ def create_url(keyword, max_results = 10):
                     # 'end_time': end_date,
                     'max_results': max_results,
                     # 'expansions': 'author_id,in_reply_to_user_id,geo.place_id',
-                    # 'tweet.fields': 'id,text,author_id,in_reply_to_user_id,geo,conversation_id,created_at,lang,public_metrics,referenced_tweets,reply_settings,source',
+                    'tweet.fields': 'geo', # 'id,text,author_id,in_reply_to_user_id,geo,conversation_id,created_at,lang,public_metrics,referenced_tweets,reply_settings,source',
                     # 'user.fields': 'id,name,username,created_at,description,public_metrics,verified',
                     # 'place.fields': 'full_name,id,country,country_code,geo,name,place_type',
                     'next_token': {}}
@@ -72,10 +72,10 @@ def append_to_csv(json_response, fileName):
         # created_at = dateutil.parser.parse(tweet['created_at'])
 
         # # 3. Geolocation
-        # if ('geo' in tweet):   
-        #     geo = tweet['geo']['place_id']
-        # else:
-        #     geo = " "
+        if ('geo' in tweet):   
+            geo = tweet['geo']['place_id']
+        else:
+            geo = " "
 
         # 4. Tweet ID
         tweet_id = tweet['id']
@@ -96,7 +96,7 @@ def append_to_csv(json_response, fileName):
         text = tweet['text']
         
         # Assemble all data you have chosen to collect in a list
-        res = [tweet_id, text]
+        res = [tweet_id, text, geo]
         
         # Append the result to the CSV file
         csvWriter.writerow(res)
@@ -118,7 +118,7 @@ next_token = None # Token to paginate tweet responses (allows for a loop until t
 csvFile = open(filename, "a", newline="", encoding='utf-8')
 csvWriter = csv.writer(csvFile)
 # Create headers for the data you want to save into the CSV, in this example, we only want save these columns in our dataset
-csvWriter.writerow(['id','tweet'])
+csvWriter.writerow(['id','tweet','geo'])
 csvFile.close()
 
 # Setup to collect tweets with v2 API  
