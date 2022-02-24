@@ -13,6 +13,7 @@ source_filename = "" # Your given query to search tweets (necessary, cannot sear
 collection_total = 100 # How many tweets do you want to collect with the API using the IDs in your source file
 filename = "tweetID_return_24_02_2022.csv" # Name of file to save the data into, type .csv
 id_file = "./Zenodo Tweet IDs/Twitter-historical-20060321-20090731-sample.txt" # Name of file with tweet IDs to read from
+flag_all_languages = True # Flag para determinar se vai coletar tweets além do portugues. True = coleta, False = nao coleta
 os.environ['TOKEN'] = 'token' # Bearer Token from your twitter dev account
 
 # Functions of the program:
@@ -31,7 +32,8 @@ def create_url(id):
     return (search_url)
 
 def connect_to_endpoint(url, headers):
-    response = requests.request("GET", url, headers = headers)
+    query_params = {'tweet.fields': 'lang'}
+    response = requests.request("GET", url, headers = headers, params = query_params)
     
     print("Endpoint Response Code: " + str(response.status_code))
     
@@ -41,34 +43,37 @@ def connect_to_endpoint(url, headers):
 
 def append_to_csv(json_response, fileName):
     if 'data' in json_response:
-        #A counter variable
-        counter = 0
+        if (json_response['data']['lang'] == 'pt' or json_response['data']['lang'] == 'br') or flag_all_languages:
 
-        # Open OR create the target CSV file
-        csvFile = open(fileName, "a", newline="", encoding='utf-8')
-        csvWriter = csv.writer(csvFile)
+            # Open OR create the target CSV file
+            csvFile = open(fileName, "a", newline="", encoding='utf-8')
+            csvWriter = csv.writer(csvFile)
+                
+            # We will create a variable for each since some of the keys might not exist for some tweets
+            # So we will account for that
+
+            # 4. Tweet ID
+            tweet_id = json_response['data']['id']
+
+            # 8. Tweet text
+            text = json_response['data']['text']
             
-        # We will create a variable for each since some of the keys might not exist for some tweets
-        # So we will account for that
+            # 9. Tweet language
+            lang = json_response['data']['lang']
+            
+            # Assemble all data you have chosen to collect in a list
+            res = [tweet_id, text, lang]
+            
+            # Append the result to the CSV file
+            csvWriter.writerow(res)
 
-        # 4. Tweet ID
-        tweet_id = json_response['data']['id']
+            # When done, close the CSV file
+            csvFile.close()
 
-        # 8. Tweet text
-        text = json_response['data']['text']
-        
-        # Assemble all data you have chosen to collect in a list
-        res = [tweet_id, text]
-        
-        # Append the result to the CSV file
-        csvWriter.writerow(res)
-        counter += 1
-
-        # When done, close the CSV file
-        csvFile.close()
-
-        # Print the number of tweets for this iteration
-        print("# of Tweets added from this response into CSV: ", counter)
+            # Print the number of tweets for this iteration
+            print("Tweet added into CSV.")
+        else:
+            print("Not a portuguese tweet.")
     elif 'errors' in json_response:
         print("Error found. No tweet added to the CSV.")
     
@@ -80,7 +85,7 @@ total_tweets = 0 # Total number of tweets we collected from the loop
 csvFile = open(filename, "a", newline="", encoding='utf-8')
 csvWriter = csv.writer(csvFile)
 # Create headers for the data you want to save into the CSV, in this example, we only want save these columns in our dataset
-csvWriter.writerow(['id','tweet'])
+csvWriter.writerow(['id','tweet','lang'])
 csvFile.close()
 
 # Setup to collect tweets with v2 API  
@@ -102,7 +107,7 @@ with open(id_file) as fp:
         print(json_response)
         append_to_csv(json_response, filename)
         total_tweets += 1
-        print("Total # of Tweets collected so far: ", total_tweets)
+        print("Total # of IDs searched so far: ", total_tweets)
         print("-------------------")
         time.sleep(1)
       
