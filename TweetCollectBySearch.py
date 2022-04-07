@@ -10,8 +10,8 @@ import time
 
 # Variables to change on each use of the program:
 keyword = "a" # Your given query to search tweets (necessary, cannot search for nothing)
-collection_total = 100 # How many tweets do you want to collect with the API and add into the CSV (MINIMUM OF 100)
-filename = "tweetSEARCH_return_17_02_2022.csv" # Name of file to save the data into, type .csv
+collection_total = 250000 # How many tweets do you want to collect with the API and add into the CSV (MINIMUM OF 100)
+filename = "./tweets/tweetSEARCH_return_01_04_2022_8.csv" # Name of file to save the data into, type .csv
 os.environ['TOKEN'] = 'token' # Bearer Token from your twitter dev account
 
 # Functions of the program:
@@ -73,7 +73,7 @@ def append_to_csv(json_response, fileName):
 
         # # 3. Geolocation
         if ('geo' in tweet):   
-            geo = tweet['geo']['place_id']
+            geo = tweet['geo']
         else:
             geo = " "
 
@@ -146,7 +146,7 @@ while total_tweets < collection_total:
             total_tweets += result_count
             print("Total # of Tweets added: ", total_tweets)
             print("-------------------")
-            time.sleep(1)                
+            time.sleep(1)
     # If no next token exists
     else:
         if result_count is not None and result_count > 0:
