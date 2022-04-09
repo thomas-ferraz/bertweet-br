@@ -4,7 +4,7 @@ rows = []
 
 file_count = 1
 second_count = 0
-for i in range(16):
+for i in range(24):
 	row_count = 0
 	with open(f'./tweets/return_{file_count}.csv', 'r') as fileC:
 		csvreader = csv.reader(fileC)
