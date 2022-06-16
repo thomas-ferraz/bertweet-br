@@ -96,7 +96,7 @@ import transformers
 transformers.logging.set_verbosity_info()
 batch_size = 32
 # Show the training loss with every epoch
-logging_steps = 10 #len(downsampled_dataset["train"]) // batch_size
+logging_steps = len(downsampled_dataset["train"]) // batch_size
 model_name = model_checkpoint.split("/")[-1]
 
 training_args = TrainingArguments(
@@ -146,7 +146,7 @@ trainer.save_metrics("all", metrics)
 with open('./BERTweetBRLogger2_logs/text_logs.txt', 'w') as f:
 	for obj in trainer.state.log_history:
 		f.write(str(obj))
-		f.write('/n')
+		f.write('\n')
     
 
 trainer.save_model("BERTweetBRLogger2")
