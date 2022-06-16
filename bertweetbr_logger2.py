@@ -1,7 +1,7 @@
 text = "É um belo [MASK]."
 model_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 chunk_size = 128
-train_size = 1_000
+train_size = 100
 test_size = int(0.1 * train_size)
 
 # Pega o model
@@ -27,7 +27,7 @@ for token in top_5_tokens:
 
 # Prepara datasets
 from datasets import load_dataset
-imdb_dataset = load_dataset('text', data_files={'train': ['./data/text/tweet_text/quick.txt'], 'test': './data/text/tweet_text/quick2.txt'})
+imdb_dataset = load_dataset('text', data_files={'train': ['./tweets/text/text_25.txt'], 'test': './tweets/text/text_26.txt'})
 
 # Funcao para tokenizacao
 def tokenize_function(examples):
@@ -79,24 +79,36 @@ print(downsampled_dataset)
 
 #notebook_login()
 
+from datasets import load_metric
+import numpy as np
+
+metric = load_metric("accuracy")
+
+def compute_metrics(eval_pred):
+    logits, labels = eval_pred
+    predictions = np.argmax(logits, axis=-1)
+    return metric.compute(predictions=predictions, references=labels)
+
 # Prepara os TrainingArguments
 from transformers import TrainingArguments
+import transformers
 
+transformers.logging.set_verbosity_info()
 batch_size = 32
 # Show the training loss with every epoch
-logging_steps = len(downsampled_dataset["train"]) // batch_size
+logging_steps = 10 #len(downsampled_dataset["train"]) // batch_size
 model_name = model_checkpoint.split("/")[-1]
 
 training_args = TrainingArguments(
     output_dir="BERTweetBRLogger2",
     logging_dir = "BERTweetBRLogger2_logs",
     overwrite_output_dir=True,
-    evaluation_strategy="epoch",
+    evaluation_strategy="steps",
     learning_rate=2e-5,
     weight_decay=0.01,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
-    fp16=True,
+    fp16=False,
     logging_steps=logging_steps,
 )
 
@@ -128,7 +140,13 @@ max_train_samples = len(downsampled_dataset["train"])
 metrics["train_samples"] = min(max_train_samples, len(downsampled_dataset["train"]))
 
 # save train results
-trainer.log_metrics("train", metrics)
-trainer.save_metrics("train", metrics)
+trainer.log_metrics("all", metrics)
+trainer.save_metrics("all", metrics)
+
+with open('./BERTweetBRLogger2_logs/text_logs.txt', 'w') as f:
+	for obj in trainer.state.log_history:
+		f.write(str(obj))
+		f.write('/n')
+    
 
 trainer.save_model("BERTweetBRLogger2")
