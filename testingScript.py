@@ -10,4 +10,3 @@ fill_mask = pipeline(
 )
 
 print(fill_mask("O [MASK] é um grande problema atualmente."))
-

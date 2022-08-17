@@ -10,8 +10,8 @@ import time
 
 # Variables to change on each use of the program:
 keyword = "a" # Your given query to search tweets (necessary, cannot search for nothing)
-collection_total = 250000 # How many tweets do you want to collect with the API and add into the CSV (MINIMUM OF 100)
-filename = "./tweets/tweetSEARCH_return_01_04_2022_8.csv" # Name of file to save the data into, type .csv
+collection_total = 500000 # How many tweets do you want to collect with the API and add into the CSV (MINIMUM OF 100)
+filename = "./tweets/return_38.csv" # Name of file to save the data into, type .csv
 os.environ['TOKEN'] = 'token' # Bearer Token from your twitter dev account
 
 # Functions of the program:

@@ -1,3 +1,5 @@
+# Check out result logs with... tensorboard --logdir BERTweetBRLogger2_logs/
+
 text = "É um belo [MASK]."
 model_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 chunk_size = 128
