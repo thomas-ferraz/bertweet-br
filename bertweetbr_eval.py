@@ -1,14 +1,16 @@
+# AVISO = O bertweetbr_eval eh bem similar ao _train. Removi as partes nao necessarias para rodar o eval, mas o resto eh preciso manter para ter tanto um dataset tokenizado para eval, como o Trainer para fazer o eval
+
 # Valores para configuracao
 model_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 tokenizer_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 chunk_size = 128
 batch_size = 32
 train_size = 1000
-test_size = int(0.1 * train_size)
+test_size = int(1 * train_size)
 learning_rate = 2e-5
 weight_decay = 0.01
-output_dir = "BERTweetBR" # Nao use caracteres especiais, nem . ou /
-logging_dir = "BERTweetBR_logs" # Nao use caracteres especiais, nem . ou /
+output_dir = "BERTweetBR_eval" # Nao use caracteres especiais, nem . ou /
+logging_dir = "BERTweetBR_eval_logs" # Nao use caracteres especiais, nem . ou /
 evaluation_strategy="steps"
 overwrite_output_dir=True
 fp16=False
@@ -93,7 +95,7 @@ logging_steps = len(final_dataset["train"]) // batch_size
 
 
 
-# Prepara os TrainingArguments
+# Prepara os TrainingArguments (nao muito util para eval, mas necessario para o Trainer em si)
 from transformers import TrainingArguments
 
 training_args = TrainingArguments(
@@ -111,7 +113,7 @@ training_args = TrainingArguments(
 
 
 
-# Prepara o Trainer
+# Prepara o Trainer (so vai ser usado para eval)
 from transformers import Trainer
 
 trainer = Trainer(
@@ -124,48 +126,30 @@ trainer = Trainer(
 
 
 
-# Coleta perplexidade antes de treinar, somente avaliando
+# Coleta perplexidade
 import math
 eval_results = trainer.evaluate()
 print(f">>> Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
-initial_perplexity = math.exp(eval_results['eval_loss'])
+print(eval_results)
 
 
 
-# Treina
-train_result = trainer.train()
 
+# Coletando metricas do resultado de evaluate()
+metrics = eval_results
+metrics["eval_samples"] = len(final_dataset["test"])
 
-
-# Coleta perplexidade apos treinar, avaliando
-eval_results = trainer.evaluate()
-print(f">>> Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
-
-
-
-# Coletando metricas do resultado de train()
-metrics = train_result.metrics
-metrics["train_samples"] = len(final_dataset["train"])
-
-# Save train results
+# Show eval results
 trainer.log_metrics("all", metrics)
-trainer.save_metrics("all", metrics)
 
 
 
 # Cria log do historico do obj do Trainer
-with open(str(logging_dir)+'/trainer_logs.txt', 'w') as f:
+with open(str(logging_dir)+'/eval_logs.txt', 'w') as f:
 	for obj in trainer.state.log_history:
 		f.write(str(obj))
 		f.write('\n')
 	f.write('\n\n\n')
 	f.write(str(metrics))
 	f.write('\n\n\n')
-	f.write('Initial Perplexity = '+str(initial_perplexity))
-	f.write('\n')
-	f.write('Final Perplexity = '+str(math.exp(eval_results['eval_loss'])))
-
-
-
-# Salva modelo treinado
-trainer.save_model(output_dir)
+	f.write('Eval Perplexity = '+str(math.exp(eval_results['eval_loss'])))
