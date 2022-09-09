@@ -10,5 +10,11 @@ Objetivos específicos deste projeto incluem:
 - Utilizar este modelo para a análise de tweets relativos a FEBRACE. 
 - Estudar aspectos de robustez deste modelo a entradas inesperadas, bem como aspectos que podem ser transferidos para outras línguas. 
 
+# Como utilizar
+
+É necessário usar o modelo BERTimbau como base de treino. Instale as dependências necessárias e então rode o arquivo bertweetbr_train (ajuste as variáveis no início do arquivo de acordo com seu objetivo). Ele vai gerar uma pasta com o modelo treinado.
+
+Para avaliar o modelo, rode o arquivo bertweetbr_eval (novamente, ajuste as variáveis no início do arquivo de acordo com seu objetivo. Será necessário atualizar o caminho do modelo para o seu modelo treinado). Ele vai gerar uma pasta com um arquivo .txt com as métricas salvas, e também um arquivo .out.tf.events para ser aberto com o TensorBoard.
+
 
 [^1]: Plano de pesquisa faz parte do projeto aprovado no Edital: MCTIC/CNPq N° 05/2019, Processo nº: 441081/2019-3 “Avaliação de impacto da adoção de abordagens envolvendo iniciação à pesquisa e participação em feiras investigativas na Educação Básica, por meio de aplicação de Visual Analytics & Learning Analytics”.
