@@ -2,9 +2,11 @@ import csv
 import pandas as pd
 rows = []
 
+max_file_number = 38
+
 file_count = 1
 second_count = 1
-for i in range(38):
+for i in range(max_file_number):
 	print("Iteration #"+str(i))
 	print("File #"+str(file_count))
 	row_count = 0
