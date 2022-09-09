@@ -16,7 +16,7 @@ Objetivos específicos deste projeto incluem:
 
 Para avaliar o modelo, rode o arquivo bertweetbr_eval (novamente, ajuste as variáveis no início do arquivo de acordo com seu objetivo. Será necessário atualizar o caminho do modelo para o seu modelo treinado). Ele vai gerar uma pasta com um arquivo .txt com as métricas salvas, e também um arquivo .out.tf.events para ser aberto com o TensorBoard.
 
-Para coletar os tweets, basta preencher o arquivo TweetCollectBySearch com os valores apropriados da sua chave de API v2 do Twitter, uma keyword de busca se desejável, um limite de tweets para coleta e o destino desses tweets. Os tweets vão ser salvo em .csv mas caso queira usá-los como .txt basta rodar o arquivo csvToText com o número apropriado no limite de leitura do laço de repetição (max_file_number).
+Para coletar os tweets, basta preencher o arquivo TweetCollectBySearch com os valores apropriados da sua chave de API v2 do Twitter, uma keyword de busca se desejável, um limite de tweets para coleta e o destino desses tweets. Os tweets vão ser salvos em .csv mas caso queira usá-los como .txt basta rodar o arquivo csvToText com o número apropriado no limite de leitura do laço de repetição (max_file_number).
 
 
 [^1]: Plano de pesquisa faz parte do projeto aprovado no Edital: MCTIC/CNPq N° 05/2019, Processo nº: 441081/2019-3 “Avaliação de impacto da adoção de abordagens envolvendo iniciação à pesquisa e participação em feiras investigativas na Educação Básica, por meio de aplicação de Visual Analytics & Learning Analytics”.
