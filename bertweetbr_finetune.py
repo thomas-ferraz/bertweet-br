@@ -1,9 +1,9 @@
 # Valores para configuracao
-model_checkpoint = 'neuralmind/bert-base-portuguese-cased'
+model_checkpoint = './BERTweetBR2'
 tokenizer_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 chunk_size = 282
-batch_size = 32
-train_size = 100
+batch_size = 8
+train_size = 10000
 test_size = int(0.1 * train_size)
 learning_rate = 2e-5
 weight_decay = 0.01
@@ -82,10 +82,10 @@ print(raw_train_dataset.features)
 
 
 
-#print('\n ETAPA - DOWNSAMPLE DO DATASET \n')
-#raw_datasets["train"] = raw_datasets["train"].shuffle(seed=42).select([i for i in list(range(train_size))])
-#raw_datasets["validation"] = raw_datasets["validation"].shuffle(seed=42).select([i for i in list(range(test_size))])
-#raw_datasets["test"] = raw_datasets["test"].shuffle(seed=42).select([i for i in list(range(test_size))])
+print('\n ETAPA - DOWNSAMPLE DO DATASET \n')
+raw_datasets["train"] = raw_datasets["train"].shuffle(seed=42).select([i for i in list(range(train_size))])
+raw_datasets["validation"] = raw_datasets["validation"].shuffle(seed=42).select([i for i in list(range(test_size))])
+raw_datasets["test"] = raw_datasets["test"].shuffle(seed=42).select([i for i in list(range(test_size))])
 
 
 
