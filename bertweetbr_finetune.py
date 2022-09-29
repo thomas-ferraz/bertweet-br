@@ -3,7 +3,7 @@ model_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 tokenizer_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 chunk_size = 282
 batch_size = 32
-train_size = 20
+train_size = 100
 test_size = int(0.1 * train_size)
 learning_rate = 2e-5
 weight_decay = 0.01
@@ -27,11 +27,20 @@ import numpy as np
 from datasets import load_metric
 import evaluate
 def compute_metrics(eval_preds):
-    metric = evaluate.load("glue", "mrpc")#, "mse", "accuracy", "precision", "f1")
     logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
-    print(metric.compute(predictions=predictions, references=labels))
-    return metric.compute(predictions=predictions, references=labels)
+    
+    load_accuracy = load_metric("accuracy")
+    load_f1 = load_metric("f1")
+    load_precision = load_metric("precision")
+    load_mse = load_metric("mse")
+    
+    accuracy = load_accuracy.compute(predictions=predictions, references=labels)["accuracy"]
+    f1 = load_f1.compute(predictions=predictions, references=labels, average='weighted')["f1"]
+    precision = load_precision.compute(predictions=predictions, references=labels, average='weighted')["precision"]
+    mse = load_mse.compute(predictions=predictions, references=labels)["mse"]
+    
+    return {"accuracy": accuracy, "f1": f1, "precision": precision, "mse": mse}
 
 
 import torch
