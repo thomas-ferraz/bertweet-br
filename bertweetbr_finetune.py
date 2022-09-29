@@ -1,15 +1,15 @@
 # Valores para configuracao
 model_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 tokenizer_checkpoint = 'neuralmind/bert-base-portuguese-cased'
-chunk_size = 128
+chunk_size = 282
 batch_size = 32
-train_size = 20000
+train_size = 20
 test_size = int(0.1 * train_size)
 learning_rate = 2e-5
 weight_decay = 0.01
-output_dir = "BERTweetBR2" # Nao use caracteres especiais, nem . ou /
-logging_dir = "BERTweetBR2_logs" # Nao use caracteres especiais, nem . ou /
-evaluation_strategy="steps"
+output_dir = "BERTweetBR2_sentiment" # Nao use caracteres especiais, nem . ou /
+logging_dir = "BERTweetBR2_sentiment_logs" # Nao use caracteres especiais, nem . ou /
+evaluation_strategy="epoch"
 overwrite_output_dir=True
 fp16=False
 
@@ -17,68 +17,90 @@ fp16=False
 
 # Funcao para tokenizacao
 def tokenize_function(examples):
-    result = tokenizer(examples["text"])
-    if tokenizer.is_fast:
-        result["word_ids"] = [result.word_ids(i) for i in range(len(result["input_ids"]))]
+    examples["labels"] = examples["sentiment"]
+    result = tokenizer(examples["tweet_text"], truncation=True)
+    #if tokenizer.is_fast:
+        #result["word_ids"] = [result.word_ids(i) for i in range(len(result["input_ids"]))]
     return result
 
-# Funcao para agrupar textos por chunk
-def group_texts(examples):
-    # Concatenate all texts
-    concatenated_examples = {k: sum(examples[k], []) for k in examples.keys()}
-    # Compute length of concatenated texts
-    total_length = len(concatenated_examples[list(examples.keys())[0]])
-    # We drop the last chunk if it's smaller than chunk_size
-    total_length = (total_length // chunk_size) * chunk_size
-    # Split by chunks of max_len
-    result = {
-        k: [t[i : i + chunk_size] for i in range(0, total_length, chunk_size)]
-        for k, t in concatenated_examples.items()
-    }
-    # Create a new labels column
-    result["labels"] = result["input_ids"].copy()
-    return result
-    
-    
-    
+import numpy as np
+from datasets import load_metric
+import evaluate
+def compute_metrics(eval_preds):
+    metric = evaluate.load("glue", "mrpc")#, "mse", "accuracy", "precision", "f1")
+    logits, labels = eval_preds
+    predictions = np.argmax(logits, axis=-1)
+    print(metric.compute(predictions=predictions, references=labels))
+    return metric.compute(predictions=predictions, references=labels)
+
+
+import torch
+print(torch.cuda.is_available())
+
+print('\n ETAPA - COLETA DE MODELO E TOKENIZADOR \n')    
 # Pega o model
-from transformers import AutoModelForMaskedLM
-model = AutoModelForMaskedLM.from_pretrained(model_checkpoint)
+from transformers import AutoModelForPreTraining, AutoModelForTokenClassification, AutoModelForSequenceClassification, BertForPreTraining, BertModel, AutoModel
+model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=3)
 
 # Pega o tokenizer
 from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained(tokenizer_checkpoint)
 
 # Pega o Data Collator
-from transformers import DataCollatorForLanguageModeling
-data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=0.15)
+from transformers import DataCollatorWithPadding
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
 
 
+print('\n ETAPA - COLETA DATASET RAW \n')
 # Prepara datasets
-from datasets import load_dataset
-raw_dataset = load_dataset('text', data_files={'train': ['./tweets/text/text_1.txt','./tweets/text/text_2.txt','./tweets/text/text_3.txt','./tweets/text/text_4.txt','./tweets/text/text_5.txt','./tweets/text/text_6.txt','./tweets/text/text_7.txt','./tweets/text/text_8.txt','./tweets/text/text_9.txt','./tweets/text/text_10.txt','./tweets/text/text_11.txt','./tweets/text/text_12.txt','./tweets/text/text_13.txt','./tweets/text/text_14.txt','./tweets/text/text_15.txt','./tweets/text/text_16.txt','./tweets/text/text_17.txt','./tweets/text/text_18.txt','./tweets/text/text_19.txt','./tweets/text/text_20.txt','./tweets/text/text_21.txt','./tweets/text/text_22.txt','./tweets/text/text_23.txt','./tweets/text/text_24.txt','./tweets/text/text_25.txt']})
-print(raw_dataset)
+# Negative label = 0
+# Positive label = 1
+# Neutral label = 2
+from datasets import load_dataset, ClassLabel
+raw_datasets = load_dataset('csv', delimiter=';', data_files={'train': ['./kaggle/trainingdatasets/Train3Classes.csv'], 'validation':['./kaggle/testdatasets/Test3classes.csv'], 'test': ['./kaggle/testdatasets/Test3classes.csv']})
 
-# Diminuir tamanho do dataset
-downsampled_dataset = raw_dataset["train"].train_test_split(train_size=train_size,test_size=test_size, seed=42)
-print(downsampled_dataset)
+print('\n ETAPA - MUDA COLUNA SENTIMENT DE INT PARA CLASSLABEL \n')
+raw_datasets = raw_datasets.class_encode_column("sentiment")
 
+# Outra forma de marcar como classlabel
+#feat_sentiment = ClassLabel(num_classes=3, names = ['0', '1', '2'], names_file=None)
+#raw_datasets = raw_datasets.cast_column("sentiment", feat_sentiment)
+
+print('\n ETAPA - FEATURES DE RAW_DATASET \n')
+raw_train_dataset = raw_datasets["train"]
+print(raw_train_dataset.features)
+
+
+
+print('\n ETAPA - DOWNSAMPLE DO DATASET \n')
+raw_datasets["train"] = raw_datasets["train"].shuffle(seed=42).select([i for i in list(range(train_size))])
+raw_datasets["validation"] = raw_datasets["validation"].shuffle(seed=42).select([i for i in list(range(test_size))])
+raw_datasets["test"] = raw_datasets["test"].shuffle(seed=42).select([i for i in list(range(test_size))])
+
+
+
+print('\n ETAPA - TOKENIZA DATASET \n')
 # Tokenizando datasets
-tokenized_datasets = downsampled_dataset.map(
-    tokenize_function, batched=True, remove_columns=["text"]
+tokenized_datasets = raw_datasets.map(
+    tokenize_function, batched=True, remove_columns=["id", "tweet_date", "query_used"]
 )
+tokenized_datasets = tokenized_datasets.class_encode_column("labels")
 print(tokenized_datasets)
 
-# Aplicando group_texts para dataset tokenizado
-final_dataset = tokenized_datasets.map(group_texts, batched=True)
-print(final_dataset)
+print('\n ETAPA - FEATURES DE TOKENIZED_DATASET \n')
+tokenized_train_dataset = tokenized_datasets["train"]
+print(tokenized_train_dataset.features)
 
 
 
-# Carrega metrica de perplexidade
-from datasets import load_metric
-metric = load_metric("perplexity")
+# Teste aplicando data collator
+#samples = tokenized_datasets["train"][:8]
+#samples = {k: v for k, v in samples.items() if k not in ["tweet_text"]}
+#print([len(x) for x in samples["input_ids"]])
+
+#batch = data_collator(samples)
+#print({k: v.shape for k, v in batch.items()})
 
 
 
@@ -86,13 +108,12 @@ metric = load_metric("perplexity")
 import transformers
 transformers.logging.set_verbosity_info()
 
-
-
 # Mostra log a cada step definido abaixo
-logging_steps = len(final_dataset["train"]) // batch_size
+logging_steps = len(tokenized_datasets["train"]) // batch_size
 
 
 
+print('\n ETAPA - TREINO \n')
 # Prepara os TrainingArguments
 from transformers import TrainingArguments
 
@@ -106,7 +127,6 @@ training_args = TrainingArguments(
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
     fp16=fp16,
-    logging_steps=logging_steps,
 )
 
 
@@ -117,55 +137,38 @@ from transformers import Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=final_dataset["train"],
-    eval_dataset=final_dataset["test"],
+    train_dataset=tokenized_datasets["train"],
+    eval_dataset=tokenized_datasets["test"],
     data_collator=data_collator,
+    compute_metrics=compute_metrics,
 )
 
+# DEBUGGING
+#print(trainer.train_dataset[0])
+#print(tokenizer.decode(trainer.train_dataset[0]["input_ids"]))
+#print(trainer.train_dataset[0].keys())
+#print(trainer.train_dataset[0]["attention_mask"])
+#print(len(trainer.train_dataset[0]["attention_mask"]) == len(trainer.train_dataset[0]["input_ids"]))
+#print(trainer.train_dataset[0]["labels"])
+#print(trainer.train_dataset.features["labels"].names)
+
+#for batch in trainer.get_train_dataloader():
+#    print(batch)
+#    break
 
 
-# Coleta perplexidade antes de treinar, somente avaliando
-import math
-eval_results = trainer.evaluate()
-print(f">>> Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
-initial_perplexity = math.exp(eval_results['eval_loss'])
 
-
-
-# Treina
-train_result = trainer.train('./BERTweetBR2/checkpoint-11500')
-
-
-
-# Coleta perplexidade apos treinar, avaliando
-eval_results = trainer.evaluate()
-print(f">>> Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
+train_result = trainer.train()
 
 
 
 # Coletando metricas do resultado de train()
 metrics = train_result.metrics
-metrics["train_samples"] = len(final_dataset["train"])
+metrics["train_samples"] = len(tokenized_datasets["train"])
 
 # Save train results
 trainer.log_metrics("all", metrics)
 trainer.save_metrics("all", metrics)
-
-
-
-# Cria log do historico do obj do Trainer
-with open(str(logging_dir)+'/trainer_logs.txt', 'w') as f:
-	for obj in trainer.state.log_history:
-		f.write(str(obj))
-		f.write('\n')
-	f.write('\n\n\n')
-	f.write(str(metrics))
-	f.write('\n\n\n')
-	f.write('Initial Perplexity = '+str(initial_perplexity))
-	f.write('\n')
-	f.write('Final Perplexity = '+str(math.exp(eval_results['eval_loss'])))
-
-
 
 # Salva modelo treinado
 trainer.save_model(output_dir)
