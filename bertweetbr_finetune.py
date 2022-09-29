@@ -46,7 +46,7 @@ def compute_metrics(eval_preds):
 import torch
 print(torch.cuda.is_available())
 
-print('\n ETAPA - COLETA DE MODELO E TOKENIZADOR \n')    
+print('\n ETAPA - DEFINICAO DE MODELO E TOKENIZADOR \n')    
 # Pega o model
 from transformers import AutoModelForPreTraining, AutoModelForTokenClassification, AutoModelForSequenceClassification, BertForPreTraining, BertModel, AutoModel
 model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=3)
@@ -82,10 +82,10 @@ print(raw_train_dataset.features)
 
 
 
-print('\n ETAPA - DOWNSAMPLE DO DATASET \n')
-raw_datasets["train"] = raw_datasets["train"].shuffle(seed=42).select([i for i in list(range(train_size))])
-raw_datasets["validation"] = raw_datasets["validation"].shuffle(seed=42).select([i for i in list(range(test_size))])
-raw_datasets["test"] = raw_datasets["test"].shuffle(seed=42).select([i for i in list(range(test_size))])
+#print('\n ETAPA - DOWNSAMPLE DO DATASET \n')
+#raw_datasets["train"] = raw_datasets["train"].shuffle(seed=42).select([i for i in list(range(train_size))])
+#raw_datasets["validation"] = raw_datasets["validation"].shuffle(seed=42).select([i for i in list(range(test_size))])
+#raw_datasets["test"] = raw_datasets["test"].shuffle(seed=42).select([i for i in list(range(test_size))])
 
 
 
