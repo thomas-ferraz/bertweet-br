@@ -12,9 +12,11 @@ Objetivos específicos deste projeto incluem:
 
 # Como utilizar
 
-É necessário usar o modelo BERTimbau como base de treino. Instale as dependências necessárias e então rode o arquivo bertweetbr_train (ajuste as variáveis no início do arquivo de acordo com seu objetivo). Ele vai gerar uma pasta com o modelo treinado.
+É necessário usar o modelo BERTimbau como base de treino. Instale as dependências necessárias e então rode o arquivo bertweetbr_train (ajuste as variáveis no início do arquivo de acordo com seu objetivo). Ele vai gerar uma pasta com o modelo treinado. Isso é para domain adaptation.
 
 Para avaliar o modelo, rode o arquivo bertweetbr_eval (novamente, ajuste as variáveis no início do arquivo de acordo com seu objetivo. Será necessário atualizar o caminho do modelo para o seu modelo treinado). Ele vai gerar uma pasta com um arquivo .txt com as métricas salvas, e também um arquivo .out.tf.events para ser aberto com o TensorBoard.
+
+Para fazer um finetune numa tarefa (no nosso caso, está preparado para fazer finetune na tarefa de classiciação de emoções) use o arquivo bertweetbr_finetune.py, mesma lógica do arquivo bertweetbr_train.py contudo esse arquivo está preparado para treinar classificação de emoções. Vai ser necessário adicionar seu próprio dataset com o texto e os labels das emoções, marcandno a coluna do dataset com tais labels usando a função .class_encode_column() conforme mostrado no código em questão (linha 79). Caso queira dar finetune em outra tarefa, será necessário fazer um outro código de treino.
 
 Para coletar os tweets, basta preencher o arquivo TweetCollectBySearch com os valores apropriados da sua chave de API v2 do Twitter, uma keyword de busca se desejável, um limite de tweets para coleta e o destino desses tweets. Os tweets vão ser salvos em .csv mas caso queira usá-los como .txt basta rodar o arquivo csvToText com o número apropriado no limite de leitura do laço de repetição (max_file_number).
 
