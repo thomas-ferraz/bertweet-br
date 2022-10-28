@@ -1,14 +1,14 @@
 # Valores para configuracao
-model_checkpoint = './BERTweetBR2'
+model_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 tokenizer_checkpoint = 'neuralmind/bert-base-portuguese-cased'
 chunk_size = 282
 batch_size = 8
-train_size = 10000
+train_size = 40000
 test_size = int(0.1 * train_size)
 learning_rate = 2e-5
 weight_decay = 0.01
-output_dir = "BERTweetBR2_sentiment" # Nao use caracteres especiais, nem . ou /
-logging_dir = "BERTweetBR2_sentiment_logs" # Nao use caracteres especiais, nem . ou /
+output_dir = "Bertimbau_sentiment" # Nao use caracteres especiais, nem . ou /
+logging_dir = "Bertimbau_sentiment_logs" # Nao use caracteres especiais, nem . ou /
 evaluation_strategy="epoch"
 overwrite_output_dir=True
 fp16=False
@@ -33,14 +33,20 @@ def compute_metrics(eval_preds):
     load_accuracy = load_metric("accuracy")
     load_f1 = load_metric("f1")
     load_precision = load_metric("precision")
-    load_mse = load_metric("mse")
+    load_recall = load_metric("recall")
+    #load_mse = load_metric("mse") usar recall
     
     accuracy = load_accuracy.compute(predictions=predictions, references=labels)["accuracy"]
-    f1 = load_f1.compute(predictions=predictions, references=labels, average='weighted')["f1"]
-    precision = load_precision.compute(predictions=predictions, references=labels, average='weighted')["precision"]
-    mse = load_mse.compute(predictions=predictions, references=labels)["mse"]
+    f1 = load_f1.compute(predictions=predictions, references=labels, average='macro')["f1"]
+    precision = load_precision.compute(predictions=predictions, references=labels, average='macro')["precision"]
+    recall = load_recall.compute(predictions=predictions, references=labels, average='macro')["recall"]
+    #mse = load_mse.compute(predictions=predictions, references=labels)["mse"]
     
-    return {"accuracy": accuracy, "f1": f1, "precision": precision, "mse": mse}
+    result = {"accuracy": accuracy, "f1": f1, "precision": precision, "recall":recall}
+    
+    print(result)
+    
+    return {"accuracy": accuracy, "f1": f1, "precision": precision, "recall":recall}
 
 
 import torch
@@ -67,7 +73,7 @@ print('\n ETAPA - COLETA DATASET RAW \n')
 # Positive label = 1
 # Neutral label = 2
 from datasets import load_dataset, ClassLabel
-raw_datasets = load_dataset('csv', delimiter=';', data_files={'train': ['./kaggle/trainingdatasets/Train3Classes.csv'], 'validation':['./kaggle/testdatasets/Test3classes.csv'], 'test': ['./kaggle/testdatasets/Test3classes.csv']})
+raw_datasets = load_dataset('csv', delimiter=';', data_files={'train': ['./kaggle/trainingdatasets/Train3ClassesClean.csv'], 'validation':['./kaggle/testdatasets/Test3classesClean.csv'], 'test': ['./kaggle/testdatasets/Test3classesClean.csv']})
 
 print('\n ETAPA - MUDA COLUNA SENTIMENT DE INT PARA CLASSLABEL \n')
 raw_datasets = raw_datasets.class_encode_column("sentiment")
