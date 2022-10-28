@@ -34,20 +34,43 @@ data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
 
 from transformers import pipeline
+import pandas as pd
 
 classifier = pipeline('sentiment-analysis', model=model_checkpoint, tokenizer=tokenizer_checkpoint)
 
-test_strings = ['Nossa! Muito obrigada :)', 'Um teste horrivel sem emoji', 'Trist dia familia', 'Apesar de achar que as eleicoes foram horriveis, minha mae esta muito feliz hoje', 'Mas que mandinga danada seus abofe doido', 'Olha, nem foi tao ruim quanto pensava', 'Foi otimo']
+original_csv = pd.read_csv('./kaggle/testdatasets/Test3classesClean.csv', sep=";")#['Nossa! Muito obrigada :)', 'Um teste horrivel sem emoji', 'Trist dia familia', 'Apesar de achar que as eleicoes foram horriveis, minha mae esta muito feliz hoje', 'Mas que mandinga danada seus abofe doido', 'Olha, nem foi tao ruim quanto pensava', 'Foi otimo', 'Mas que dia hein?', 'Po, tentei e tentei e não consegui', 'Estou tendo problemas com seu produto']
+
+original_csv = original_csv.head(500)
+
+test_strings = original_csv['tweet_text'].tolist()
+
+y_true = original_csv['sentiment'].tolist()
+
+print(y_true)
 
 results = classifier(test_strings)
 
-for result in results:
-	print(result)
-	
-tokens = tokenizer.tokenize('Um teste horrivel sem emoji')
-token_ids = tokenizer.convert_tokens_to_ids(tokens)
-input_ids = tokenizer('Um teste horrivel sem emoji')
+print(results)
 
-print(tokens)
-print(token_ids)
-print(input_ids)
+y_pred = []
+
+for result in results:
+	if result['label'] == "LABEL_0":
+		y_pred.append(0)
+	elif result['label'] == "LABEL_1":
+		y_pred.append(1)
+	else:
+		y_pred.append(2)
+print(y_pred)	
+
+from sklearn import metrics
+print(metrics.precision_score(y_true, y_pred, average='macro'))
+print(metrics.recall_score(y_true, y_pred, average='macro'))
+print(metrics.f1_score(y_true, y_pred, average='macro'))
+#tokens = tokenizer.tokenize('Um teste horrivel sem emoji')
+#token_ids = tokenizer.convert_tokens_to_ids(tokens)
+#input_ids = tokenizer('Um teste horrivel sem emoji')
+
+#print(tokens)
+#print(token_ids)
+#print(input_ids)
