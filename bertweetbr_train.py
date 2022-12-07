@@ -15,12 +15,31 @@ fp16=False
 
 
 
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+
+
 # Funcao para tokenizacao
 def tokenize_function(examples):
     result = tokenizer(examples["text"])
     if tokenizer.is_fast:
         result["word_ids"] = [result.word_ids(i) for i in range(len(result["input_ids"]))]
     return result
+
+# Funcao para usar o spacy e detectar novos tokens
+def spacy_tokenizer(document, nlp=nlp):
+    # tokenize the document with spaCY
+    doc = nlp(document)
+    # Remove stop words and punctuation symbols
+    tokens = [
+        token.text for token in doc if (
+        token.is_stop == False and \
+        token.is_punct == False and \
+        token.text.strip() != '' and \
+        token.text.find("\n") == -1)]
+    return tokens
 
 # Funcao para agrupar textos por chunk
 def group_texts(examples):
@@ -74,6 +93,27 @@ print(tokenized_datasets)
 final_dataset = tokenized_datasets.map(group_texts, batched=True)
 print(final_dataset)
 
+# Adicionando palavras novas no tokenizer
+import spacy
+
+nlp = spacy.load("pt_core_news_sm")
+
+# https://scikit-learn.org/stable/modules/feature_extraction.html#tfidf-term-weighting
+tfidf_vectorizer = TfidfVectorizer(lowercase=False, tokenizer=spacy_tokenizer, 
+                                   norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False)
+# parse matrix of tfidf
+length = len(final_dataset)
+result = tfidf_vectorizer.fit_transform(final_dataset)
+
+# idf
+idf = tfidf_vectorizer.idf_
+
+idf_sorted_indexes = sorted(range(len(idf)), key=lambda k: idf[k])
+idf_sorted = idf[idf_sorted_indexes]
+new_tokens = np.array(tfidf_vectorizer.get_feature_names())[idf_sorted_indexes]
+
+added_tokens = tokenizer.add_tokens(new_tokens)
+model.resize_token_embeddings(len(tokenizer))
 
 
 # Carrega metrica de perplexidade
