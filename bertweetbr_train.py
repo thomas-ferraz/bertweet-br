@@ -76,7 +76,7 @@ data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probabi
 
 # Prepara datasets
 from datasets import load_dataset
-raw_dataset = load_dataset('text', data_files={'train': ['./tweets/text/text_1.txt','./tweets/text/text_2.txt','./tweets/text/text_3.txt','./tweets/text/text_4.txt','./tweets/text/text_5.txt','./tweets/text/text_6.txt','./tweets/text/text_7.txt']})
+raw_dataset = load_dataset('text', data_files={'train': ['./tweets/text/text_1.txt','./tweets/text/text_2.txt','./tweets/text/text_3.txt','./tweets/text/text_4.txt','./tweets/text/text_5.txt','./tweets/text/text_6.txt','./tweets/text/text_7.txt']}, split=[f"train[{k}%:{k+10}%]" for k in range(0, 100, 10)])
 print(raw_dataset)
 
 # Diminuir tamanho do dataset
